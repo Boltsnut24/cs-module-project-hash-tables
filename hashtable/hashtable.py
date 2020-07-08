@@ -24,7 +24,7 @@ class HashTable:
         # Your code here
         self.capacity = capacity
         self.storage = [None] * capacity
-        self.items_stored = 0
+        self.size = 0
 
 
     def get_num_slots(self):
@@ -47,7 +47,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        return self.items_stored / self.capacity
+        return self.size / self.capacity
 
     def fnv1(self, key):
         """
@@ -86,7 +86,25 @@ class HashTable:
 
         Implement this.
         """
-        self.storage[self.hash_index(key)] = value
+        index = self.hash_index(key)
+        if(self.storage[index] == None):
+            self.storage[index] = HashTableEntry(key, value)
+            self.size +=1
+        else:
+            #check if it exists already
+            curr = self.storage[index]
+            while curr.next != None and curr.key != key:
+                curr = curr.next
+            if curr.key == key:
+                curr.value = value
+            #it doesn't exist already, so add it to the head of the list
+            else:
+                new_entry = HashTableEntry(key, value)
+                new_entry.next = self.storage[index]
+                self.storage[index] = new_entry
+                self.size +=1
+        
+
 
 
     def delete(self, key):
@@ -97,8 +115,39 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-        self.put(key, None)
+        index = self.hash_index(key)
+        
+        if self.storage[index].key == key:
+            #if it was only one in the list
+            if self.storage[index].next == None:
+                #list should now be empty
+                self.storage[index] = None
+                self.size -=1
+            #it is not the only one in the list
+            else:
+                new_head = self.storage[index].next
+                self.storage[index].next = None
+                self.storage[index] = new_head
+                self.size -=1
+        #node was not first in the list or is none
+        else:
+            if self.storage[index] == None:
+                return None
+            else:
+                curr = self.storage[index]
+                prev = None
+                #search until at end or have found key
+                while curr.next is not None and curr.key != key:
+                    prev = curr
+                    curr = curr.next
+                #found the key
+                if curr.key == key:
+                    prev.next = curr.next
+                    self.size -=1
+                    return curr.value
+                #didn't find the key
+                else:
+                    return None
 
     def get(self, key):
         """
@@ -108,7 +157,20 @@ class HashTable:
 
         Implement this.
         """
-        return self.storage[self.hash_index(key)]
+        index = self.hash_index(key)
+        #if its the head
+        if self.storage[index] is not None and self.storage[index].key == key:
+            return self.storage[index].value
+        elif self.storage[index] is None:
+            return None
+        else:
+            curr = self.storage[index]
+            while curr.next != None and curr.key != key:
+                curr = self.storage[index].next
+            if curr == None:
+                return None
+            else:
+                return curr.value
 
 
     def resize(self, new_capacity):
